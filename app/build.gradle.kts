@@ -47,6 +47,19 @@ dependencies {
     implementation ("com.github.bumptech.glide:glide:4.14.2")
     implementation ("com.intuit.sdp:sdp-android:1.1.0")
     implementation("com.github.ybq:Android-SpinKit:1.4.0")
+    implementation ("com.google.android.gms:play-services-auth:20.2.0")
+    implementation ("com.airbnb.android:lottie:3.4.1")
+
+    //load image form url
+    implementation ("com.github.bumptech.glide:glide:4.13.2")
+    implementation(files("D:\\Ki_8\\PRM\\ConvenientStoreMobile\\app\\libs\\mail.jar"))
+    implementation(files("D:\\Ki_8\\PRM\\ConvenientStoreMobile\\app\\libs\\activation.jar"))
+    implementation(files("D:\\Ki_8\\PRM\\ConvenientStoreMobile\\app\\libs\\additionnal.jar"))
+
+    //gg sign in
+//    implementation(libs.credentials)
+//    implementation(libs.credentials.play.services.auth)
+//    implementation(libs.googleid)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

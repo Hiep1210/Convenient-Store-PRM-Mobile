@@ -1,31 +1,30 @@
 package com.example.convenientstoremobile;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.convenientstoremobile.Enum.ProjEnum;
 import com.example.convenientstoremobile.api.APIService;
-import com.example.convenientstoremobile.manager.product.Adapter;
+import com.example.convenientstoremobile.manager.adapter.CategoryAdapter;
+import com.example.convenientstoremobile.manager.adapter.ProductAdapter;
+import com.example.convenientstoremobile.model.Category;
 import com.example.convenientstoremobile.model.Product;
+import com.google.gson.Gson;
 
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -33,13 +32,20 @@ import retrofit2.Response;
 
 public class ProductActivity extends AppCompatActivity {
 
-    public RecyclerView productList;
+    public static List<Product> productList = new ArrayList<>();
+    CategoryAdapter categoryAdapter;
+    RecyclerView productCatRecycler;
+    RecyclerView prodItemRecycler;
+    TextView textViewAll, textViewBeverage, textViewBakery, textViewFrozen, textViewHouse;
+    ProductAdapter productAdapter;
+    SharedPreferences sharedPreferences;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        disableSSLCertificateChecking();
-        setContentView(R.layout.fragment_product);
-        productList = findViewById(R.id.productList);
+        setContentView(R.layout.activity_product_menu);
+        bindingView();
+        bindingAction();
         getProducts();
     }
 
@@ -48,12 +54,16 @@ public class ProductActivity extends AppCompatActivity {
                 .enqueue(new Callback<List<Product>>() {
                     @Override
                     public void onResponse(Call<List<Product>> call, Response<List<Product>> response) {
-                        Toast.makeText(ProductActivity.this,"We are fine",Toast.LENGTH_LONG).show();
 
-                        List<Product> product = response.body();
-                        if(product != null){
-//                            Adapter adapter = new Adapter(product, this);
-//                            productList.setAdapter();
+                        productList = response.body();
+                        if(productList != null && !productList.isEmpty()){
+                            setProdItemRecycler(productList);
+                            sharedPreferences = getSharedPreferences(ProjEnum.ProdPREFERENCE.getValue(), Context.MODE_PRIVATE);
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            Gson gson = new Gson();
+                            String gsonList = gson.toJson(productList);
+                            editor.putString("prod", gsonList);
+                            editor.commit();
                         }
                     }
 
@@ -63,38 +73,70 @@ public class ProductActivity extends AppCompatActivity {
                     }
                 });
     }
-    /**
-     * Disables the SSL certificate checking for new instances of {@link HttpsURLConnection} This has been created to
-     * aid testing on a local box, not for use on production.
-     */
-//    public static void disableSSLCertificateChecking() {
-//        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-//            public X509Certificate[] getAcceptedIssuers() {
-//                return null;
-//            }
-//
-//            @Override
-//            public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-//                // Not implemented
-//            }
-//
-//            @Override
-//            public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-//                // Not implemented
-//            }
-//        } };
-//
-//        try {
-//            SSLContext sc = SSLContext.getInstance("TLS");
-//
-//            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-//
-//            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-//            HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() { @Override public boolean verify(String hostname, SSLSession session) { return true; } });
-//        } catch (KeyManagementException e) {
-//            e.printStackTrace();
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        }
-//    }
+
+    private void setProductRecycler(List<Category> categoryList) {
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false);
+        productCatRecycler.setLayoutManager(layoutManager);
+        categoryAdapter = new CategoryAdapter(this, categoryList);
+        productCatRecycler.setAdapter(categoryAdapter);
+    }
+
+    private void setProdItemRecycler(List<Product> productsList) {
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false);
+        prodItemRecycler.setLayoutManager(layoutManager);
+        productAdapter = new ProductAdapter(this, productsList);
+        prodItemRecycler.setAdapter(productAdapter);
+    }
+
+    private void bindingView() {
+        textViewAll = findViewById(R.id.textViewAllProduct);
+        productCatRecycler = findViewById(R.id.cat_recycler);
+        prodItemRecycler = findViewById(R.id.product_recycler);
+        textViewBeverage = findViewById(R.id.textViewBeverage);
+        textViewBakery = findViewById(R.id.textViewBakery);
+        textViewFrozen = findViewById(R.id.textViewFrozen);
+        textViewHouse = findViewById(R.id.textViewHouse);
+    }
+
+    private void bindingAction() {
+        textViewAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getProducts();
+            }
+        });
+        textViewBeverage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<Product> products = productList.stream()
+                        .filter(product -> "Beverages".equals(product.getCat().getName())).collect(Collectors.toList());
+                setProdItemRecycler(products);
+            }
+        });
+        textViewBakery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<Product> products = productList.stream()
+                        .filter(product -> "Bakery Items".equals(product.getCat().getName())).collect(Collectors.toList());
+                setProdItemRecycler(products);
+            }
+        });
+        textViewFrozen.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<Product> products = productList.stream()
+                        .filter(product -> "Frozen Foods".equals(product.getCat().getName())).collect(Collectors.toList());
+                setProdItemRecycler(products);
+            }
+        });
+
+        textViewHouse.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<Product> products = productList.stream()
+                        .filter(product -> "Household Supplies".equals(product.getCat().getName())).collect(Collectors.toList());
+                setProdItemRecycler(products);
+            }
+        });
+    }
 }

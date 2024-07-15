@@ -4,12 +4,13 @@ public class User {
     private int id;
     private String name;
     public String address;
+    public String phone ;
+    public String password;
 
     public User() {
     }
 
-    public User(int id, String name, String address, String phone, String password) {
-        this.id = id;
+    public User(String name, String address, String phone, String password) {
         this.name = name;
         this.address = address;
         this.phone = phone;
@@ -56,6 +57,4 @@ public class User {
         this.password = password;
     }
 
-    public String phone ;
-    public String password;
 }
